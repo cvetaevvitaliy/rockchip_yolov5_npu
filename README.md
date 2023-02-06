@@ -12,3 +12,17 @@ Example notebook for traning model and convert to `rknn` format for Rockchip NPU
 When exporting the model, `python export.py --rknpu {rk_platform}` can export the optimized model
 
 (rk_platform supports rk1808, rv1109, rv1126, rk3399pro, rk3566, rk3568, rk3588, rv1103, rv1106)
+
+example train and convert:
+
+```bash
+cd yolov5
+# Train weights
+python train.py --data coco128.yaml --weights yolov5s.pt --batch -1 --epochs 3
+
+# Export to ONNX and modify the activation function silu to relu
+python export.py --rknpu rk3588 --weights runs/train/exp/weights/best.pt
+
+# Export to RKNN format
+python onnx2rknn.py runs/train/exp/weights/best.onnx runs/train/exp/weights/best.rknn
+```

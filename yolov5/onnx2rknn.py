@@ -7,58 +7,47 @@ import os
 
 def convert(srcFileName, dstFilename):
 
-    platform = 'rk3588'
-    OUT_DIR = "rknn_models"
-    MODEL_PATH = srcFileName
-    RKNN_MODEL_PATH = OUT_DIR + "/{}".format(dstFilename)
+    # Define Rockchip CPU:
+    # NPU Type 1: RK1808, RV1109, RV1126, RK3399PRO
+    # NPU type 2: RK3566, RK3568, RK3588, RK3588S
+    platform = "rk3588"
     
-    NEED_BUILD_MODEL = True
-    # NEED_BUILD_MODEL = False
-    im_file = './dog_bike_car_640x640.jpg'
-    
-    print('--> Source file name: ' + MODEL_PATH)
-    print('--> RKNN file name: ' + RKNN_MODEL_PATH)
+    print('--> Source file name: ' + srcFileName)
+    print('--> RKNN file name: ' + dstFilename)
 
     # Create RKNN object
     rknn = RKNN()
 
-    if NEED_BUILD_MODEL:
-        DATASET = 'data/images/dataset.txt'
-        rknn.config(mean_values=[[0, 0, 0]], std_values=[[255, 255, 255]], target_platform="rk3588")
-        # Load model
-        print('--> Loading model')
-        ret = rknn.load_onnx(MODEL_PATH)
-        if ret != 0:
-            print('load model failed!')
-            exit(ret)
-        print('done')
+    # Define dataset for quantization model 
+    DATASET = 'data/images/dataset.txt'
 
-        # Build model
-        print('--> Building model')
-        ret = rknn.build(do_quantization=True, dataset=DATASET)
-        if ret != 0:
-            print('build model failed.')
-            exit(ret)
-        print('done')
+    # Config: see documentation Rockchip_Quick_Start_RKNN_SDK 
+    rknn.config(mean_values=[[0, 0, 0]], std_values=[[255, 255, 255]], target_platform=platform)
 
-        # # Export rknn model
-        # if not os.path.exists(OUT_DIR):
-        #     os.mkdir(OUT_DIR)
-        # print('--> Export RKNN model: {}'.format(RKNN_MODEL_PATH))
-        # ret = rknn.export_rknn(RKNN_MODEL_PATH)
-        # if ret != 0:
-        #     print('Export rknn model failed.')
-        #     exit(ret)
-        # print('done')
-        print('--> Export rknn model')
-        ret = rknn.export_rknn(dstFilename)
-        if ret != 0:
-            print('Export rknn model failed!')
-            return ret
+    # Load model
+    print('--> Loading model')
+    ret = rknn.load_onnx(srcFileName)
+    if ret != 0:
+        print('load model failed!')
+        exit(ret)
+    print('done')
 
-        print('export done')
-    else:
-        ret = rknn.load_rknn(RKNN_MODEL_PATH)
+    # Build model
+    print('--> Building model')
+    ret = rknn.build(do_quantization=True, dataset=DATASET)
+    if ret != 0:
+        print('build model failed.')
+        exit(ret)
+    print('done')
+
+    # Export model to rknn format for Rockchip NPU
+    print('--> Export rknn model')
+    ret = rknn.export_rknn(dstFilename)
+    if ret != 0:
+        print('Export rknn model failed!')
+        return ret
+
+    print('export done')
 
     rknn.release()
  
